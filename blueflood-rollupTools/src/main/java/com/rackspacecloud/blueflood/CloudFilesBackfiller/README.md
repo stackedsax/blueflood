@@ -3,9 +3,10 @@
 This tool will allow you to backfill the 5m rollups from the raw data backup on Rackspace Cloud Files. It is really helpful when you failed to ingest raw data for a certain time
 range or you ingested data but it ttl'd out.
 
-### Overview of the tool
+## Overview of the tool
 
 The tool has 2 parts:
+
 1. RangeDownloader : As the name suggests, this class will kick off a process to start grabbing raw metric files from Rackspace Cloud Files. The files in Cloud Files are lexicographically
 stored and they can be paginated using a marker value. The marker value is tracked in a file called as .last_marker and is assumed to be present on the path where the RangeDownloader
 gets started. As the files start getting downloaded, RangeDownloader will keep on updating the last marker value and persisting it to the disk, so that the downloads can be resumed later.
@@ -23,13 +24,8 @@ Other configuration options that need to be taken care of are:
     in memory while calculating rollups on the fly, so determine the memory usage of the rollup generating process
 1.4 REPLAY_PERIOD_START and REPLAY_PERIOD_STOP determine the range within which you need to backfill 5m rollups.
 
-2. OufOfBandRollup : This process keeps on listening to the path `DOWNLOAD_DIR` for the Cloud Files getting downloaded by the RangeDownloader. It parses them into memory by mapping them to 5m time slots
-                     within the replay period, ordering them in time. As the metrics start getting parsed, we start seeing new 5m time slots getting filled up. We buffer `NUMBER_OF_BUFFERRED_SLOTS`
-                     in memory and when we start receiving metrics belonging to slots beyond this buffer, we grab the metrics from the "completed" time slots, roll them up to 5m metrics and push them
-                     to cassandra. So `NUMBER_OF_BUFFERRED_SLOTS` determines the memory usage in the form of number of parsed metrics we keep in memory and is a control knob that needs to be adjusted
-                     while running the tool by taking into consideration how much distributed are your metrics across the Cloud Files. More the distribution of metric across cloud files, more will this
-                     value of buffered slots which you keep in memory. If we start seeing metrics greater than a certain threshold, belonging to the range which has been already rolled, the tool will kill
-                     itself. In that case, this is one of the knob you need to adjust.
+2. OufOfBandRollup : This process keeps on listening to the path `DOWNLOAD_DIR` for the Cloud Files getting downloaded by the RangeDownloader. It parses them into memory by mapping them to 5m time slot within the replay period, ordering them in time. As the metrics start getting parsed, we start seeing new 5m time slots getting filled up. We buffer `NUMBER_OF_BUFFERRED_SLOTS`
+in memory and when we start receiving metrics belonging to slots beyond this buffer, we grab the metrics from the "completed" time slots, roll them up to 5m metrics and push them to cassandra. So `NUMBER_OF_BUFFERRED_SLOTS` determines the memory usage in the form of number of parsed metrics we keep in memory and is a control knob that needs to be adjusted while running the tool by taking into consideration how much distributed are your metrics across the Cloud Files. More the distribution of metric across cloud files, more will this value of buffered slots which you keep in memory. If we start seeing metrics greater than a certain threshold, belonging to the range which has been already rolled, the tool will kill itself. In that case, this is one of the knob you need to adjust.
 
 
 Other special setting is `SHARDS_TO_BACKFILL` which will backfill metrics belonging to only the supplied shards.
